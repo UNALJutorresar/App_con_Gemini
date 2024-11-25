@@ -30,12 +30,12 @@ def validar_fecha(fecha):
     anio, mes, dia = map(int, fecha.split('-'))
     if not 1 <= mes <= 12:
         return False
-    if dia < 1:
+    if dia < 1 or dia > 31:
         return False
     if mes in [4, 6, 9, 11] and dia > 30:
         return False
-    if mes == 2:
-        return dia <= 29
+    if mes == 2 and dia <=29:
+        return False
 
     return True
 
