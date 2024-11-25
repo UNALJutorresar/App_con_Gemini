@@ -24,7 +24,20 @@ def validar_telefono(telefono):
 
 def validar_fecha(fecha):
     patron = r"^\d{4}-\d{2}-\d{2}$"
-    return bool(re.match(patron, fecha))
+    if not re.match(patron, fecha):
+        return False
+
+    anio, mes, dia = map(int, fecha.split('-'))
+    if not 1 <= mes <= 12:
+        return False
+    if dia < 1:
+        return False
+    if mes in [4, 6, 9, 11] and dia > 30:
+        return False
+    if mes == 2:
+        return dia <= 29
+
+    return True
 
 st.title("Formulario de Validación")
 
@@ -52,4 +65,4 @@ if st.button("Validar"):
     if validar_fecha(fecha):
         st.success("Fecha válida.")
     else:
-        st.error("Fecha inválida. Use el formato AAAA-MM-DD.")
+        st.error("Fecha inválida. Use el formato AAAA-MM-DD y revise valores.")
