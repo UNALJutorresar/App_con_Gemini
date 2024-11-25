@@ -10,6 +10,9 @@ Original file is located at
 import streamlit as st
 import re
 
+import streamlit as st
+import re
+
 def detect_variable_type(text):
   """Detecta el tipo de variable en Python a partir de una cadena de texto.
 
@@ -17,13 +20,17 @@ def detect_variable_type(text):
     text: La cadena de texto a analizar.
 
   Returns:
-    Una cadena con el tipo de variable detectado (int, float, str, bool, o 'Otro').
+    Una cadena con el tipo de variable detectado (int, float, str, bool, list, tuple, dict, set, o 'Otro').
   """
 
   # Patrones para reconocer diferentes tipos de variables
   int_pattern = r"^-?\d+$"
   float_pattern = r"^-?\d*\.\d+$"
   bool_pattern = r"^(True|False)$"
+  list_pattern = r"^\[.*\]$"
+  tuple_pattern = r"^\(.*\)$"
+  dict_pattern = r"^{.*}$"
+  set_pattern = r"^{.*}$"
 
   # Verificar si coincide con un entero
   if re.match(int_pattern, text):
@@ -36,6 +43,39 @@ def detect_variable_type(text):
   # Verificar si coincide con un booleano
   elif re.match(bool_pattern, text, flags=re.IGNORECASE):
     return "bool"
+
+  # Verificar si coincide con una lista
+  elif re.match(list_pattern, text):
+    try:
+      eval(text)
+      return "list"
+    except:
+      pass
+
+  # Verificar si coincide con una tupla
+  elif re.match(tuple_pattern, text):
+    try:
+      eval(text)
+      return "tuple"
+    except:
+      pass
+
+  # Verificar si coincide con un diccionario
+  elif re.match(dict_pattern, text):
+    try:
+      eval(text)
+      return "dict"
+    except:
+      pass
+
+  # Verificar si coincide con un conjunto
+  elif re.match(set_pattern, text):
+    try:
+      eval(text)
+      if type(eval(text)) is set:
+        return "set"
+    except:
+      pass
 
   # Si no coincide con ninguno de los anteriores, es una cadena
   else:
@@ -50,7 +90,8 @@ st.write('Esta app fue elaborada por Juan Camilo Torres Arboleda.')
 # Descripción de la app
 st.write('''
             Ingresa una string en los campos y presiona el botón para
-            identificar el formato de variable.
+            identificar el tipo de variable, de acuerdo a los disponibles
+            por defecto en Python.
         ''')
 
 # Caja de texto para ingresar la cadena
