@@ -34,14 +34,14 @@ def validar_fecha(fecha):
         return False
     if mes in [4, 6, 9, 11] and dia > 30:
         return False
-    if mes == 2 and dia <=29:
+    if mes == 2 and dia >= 29:
         return False
 
     return True
 
 st.title("Formulario de Validación")
 
-nombre = st.text_input("Ingrese su nombre")
+nombre = st.text_input("Ingrese su nombre completo")
 email = st.text_input("Ingrese su correo electrónico")
 telefono = st.text_input("Ingrese su número de teléfono (+XX XXXXXXXXXX)")
 fecha = st.text_input("Ingrese una fecha (AAAA-MM-DD)")
