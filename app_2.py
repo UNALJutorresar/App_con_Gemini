@@ -19,20 +19,18 @@ def validar_email(email):
     return bool(re.match(patron, email))
 
 def validar_telefono(telefono):
-    # Adapta este patrón según los formatos de teléfono que quieras permitir
-    patron = r"^\+\d{1,3}\s\d{10}$"  # Ejemplo: +54 1123456789
+    patron = r"^\+\d{1,3}\s\d{10}$"
     return bool(re.match(patron, telefono))
 
 def validar_fecha(fecha):
-    # Adapta este patrón según los formatos de fecha que quieras permitir
-    patron = r"^\d{4}-\d{2}-\d{2}$"  # Formato AAAA-MM-DD
+    patron = r"^\d{4}-\d{2}-\d{2}$"
     return bool(re.match(patron, fecha))
 
 st.title("Formulario de Validación")
 
 nombre = st.text_input("Ingrese su nombre")
 email = st.text_input("Ingrese su correo electrónico")
-telefono = st.text_input("Ingrese su número de teléfono")
+telefono = st.text_input("Ingrese su número de teléfono (+XX XXXXXXXXXX)")
 fecha = st.text_input("Ingrese una fecha (AAAA-MM-DD)")
 
 if st.button("Validar"):
