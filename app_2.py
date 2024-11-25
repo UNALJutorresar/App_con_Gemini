@@ -10,6 +10,18 @@ Original file is located at
 import streamlit as st
 import re
 
+# Título de la app
+st.title('Verificador de formato')
+
+# Autor de la app
+st.write('Esta app fue elaborada por Juan Camilo Torres Arboleda.')
+
+# Descripción de la app
+st.write('''
+            Ingresa tus datos en los campos y presiona "Validar" para
+            verificar si están en el formato correcto.
+        ''')
+
 def validar_nombre(nombre):
     patron = r"^[A-Z][a-zA-Z]+$"
     return bool(re.match(patron, nombre))
