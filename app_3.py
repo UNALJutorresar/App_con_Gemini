@@ -21,7 +21,7 @@ def extract_data(text):
     customer_name_pattern = r'\b([A-Z][a-z]+ [A-Z][a-z]+)\b'
     date_pattern = r'\b(\d{2}/\d{2}/\d{2})\b'
     email_pattern = r'\b([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\b'
-    phone_pattern = r'\b(\+\d{2} \d{10})\b'
+    phone_pattern = r'^\+\d{1,3}\s\d{10}$'
 
     # Extract data
     prices = re.findall(price_pattern, text)
