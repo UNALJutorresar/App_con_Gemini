@@ -10,58 +10,84 @@ Original file is located at
 import streamlit as st
 import pandas as pd
 import re
+import io
 
-def procesar_csv(archivo):
+def extract_data(text):
     """
-    Lee el archivo CSV, extrae los datos con regex y devuelve un DataFrame de pandas.
-
-    Args:
-        archivo: Ruta al archivo CSV.
-
-    Returns:
-        pandas.DataFrame: DataFrame con los datos procesados.
+    Extract structured data from unorganized text using regex patterns
     """
+    # Regex patterns for different data types
+    price_pattern = r'\b(\d+(?:\.\d+)?)\b'
+    customer_name_pattern = r'\b([A-Z][a-z]+ [A-Z][a-z]+)\b'
+    date_pattern = r'\b(\d{2}/\d{2}/\d{2})\b'
+    email_pattern = r'\b([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\b'
+    phone_pattern = r'\b(\+\d{2} \d{10})\b'
 
-    datos = []
-    with open(archivo, 'r') as f:
-        for linea in f:
-            # Definimos patrones para cada columna
-            patron_precio = r"(\d+\.\d+|\d+)"
-            patron_nombres = r"(\w+\s\w+)"
-            patron_fecha = r"(\d{2}/\d{2}/\d{2})"
-            patron_email = r"(\S+@\S+)"
-            patron_telefono = r"\+(\d{2})\s(\d{9})"
+    # Extract data
+    prices = re.findall(price_pattern, text)
+    customer_names1 = re.findall(customer_name_pattern, text)
+    customer_names2 = re.findall(customer_name_pattern, text[text.index(customer_names1[0])+len(customer_names1[0]):])
+    dates = re.findall(date_pattern, text)
+    emails = re.findall(email_pattern, text)
+    phones = re.findall(phone_pattern, text)
 
-            # Extraemos los datos de cada línea usando findall
-            resultados = re.findall(f"{patron_precio},{patron_nombres},{patron_nombres},{patron_fecha},{patron_email},{patron_telefono}", linea)
+    return {
+        'Price': prices[0] if prices else None,
+        'Customer Name 1': customer_names1[0] if customer_names1 else None,
+        'Customer Name 2': customer_names2[0] if len(customer_names2) > 0 else None,
+        'Purchase Date': dates[0] if dates else None,
+        'Email': emails[0] if emails else None,
+        'Phone Number': phones[0] if phones else None
+    }
 
-            if resultados:
-                datos.append(resultados[0])
+def process_csv(uploaded_file):
+    """
+    Process the uploaded CSV file and extract structured data
+    """
+    # Read the file as text
+    file_contents = uploaded_file.getvalue().decode('utf-8')
 
-    # Creamos un DataFrame de pandas
-    df = pd.DataFrame(datos, columns=["Precio", "Nombre_Cliente1", "Nombre_Cliente2", "Fecha", "Email", "Telefono"])
+    # Split the file into lines and process each line
+    processed_data = []
+    lines = file_contents.split('\n')
+
+    for line in lines:
+        if line.strip():  # Skip empty lines
+            try:
+                extracted_data = extract_data(line)
+                processed_data.append(extracted_data)
+            except Exception as e:
+                st.warning(f"Could not process line: {line}")
+
+    # Convert to DataFrame
+    df = pd.DataFrame(processed_data)
     return df
 
 def main():
-    st.title("Procesador de CSV con Regex y Streamlit")
+    st.title('CSV Data Extractor and Organizer')
 
-    # Subida de archivo
-    uploaded_file = st.file_uploader("Selecciona un archivo CSV", type="csv")
+    # File uploader
+    uploaded_file = st.file_uploader("Choose a CSV file", type=['csv'])
 
     if uploaded_file is not None:
-        # Procesa el archivo
-        df = procesar_csv(uploaded_file)
+        # Process the file
+        df = process_csv(uploaded_file)
 
-        # Ordenar por columnas (ajusta las columnas según tus necesidades)
-        df_ordenado = df.sort_values(by=["Fecha", "Precio"])
+        # Display the processed data
+        st.write("Processed Data:")
+        st.dataframe(df)
 
-        # Descargar el archivo Excel
+        # Download button for Excel file
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='Processed Data')
+
         st.download_button(
-            label="Descargar archivo Excel",
-            data=df_ordenado.to_excel(index=False, engine='openpyxl'),
-            file_name='datos_procesados.xlsx',
-            mime='application/vnd.openpyxl-templates.xlsx'
+            label="Download Excel File",
+            data=output.getvalue(),
+            file_name='processed_data.xlsx',
+            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
