@@ -10,66 +10,64 @@ Original file is located at
 import streamlit as st
 import pandas as pd
 import re
-import xlsxwriter
+import openpyxl
 
-def extract_data(file):
-    """Extrae información de un archivo CSV y la organiza en un DataFrame de pandas.
+def process_csv(uploaded_file):
+    # Leer el archivo CSV
+    df = pd.read_csv(uploaded_file, sep=',')  # Ajusta el separador si es necesario
 
-    Args:
-        file (str): Ruta al archivo CSV.
+    # Definir expresiones regulares para cada tipo de dato
+    precio_regex = r"^\d+(\.\d+)?$"
+    nombre_regex = r"^\w+\s\w+$"
+    fecha_regex = r"^\d{2}/\d{2}/\d{2}$"
+    email_regex = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
+    telefono_regex = r"^\+\d{2}\s\d{9}$"
 
-    Returns:
-        pandas.DataFrame: DataFrame con la información extraída.
-    """
+    # Crear listas para almacenar los datos filtrados y ordenados
+    precios, nombres_cliente1, nombres_cliente2, fechas, emails, telefonos = [], [], [], [], [], []
 
-    data = []
-    with open(file, 'r') as f:
-        for line in f:
-            # Definición de patrones de búsqueda (ajustar según sea necesario)
-            precio_pattern = r"(\d+\.\d+|\d+)"
-            nombre1_pattern = r"(\w+\s\w+)"
-            nombre2_pattern = r"(\w+\s\w+)"
-            fecha_pattern = r"(\d{2}/\d{2}/\d{2})"
-            email_pattern = r"(\S+@\S+\.\S+)"
-            telefono_pattern = r"\+(\d{2})\s(\d{9})"
+    # Iterar sobre cada fila del DataFrame
+    for index, row in df.iterrows():
+        precio = row['Precio']
+        nombre_cliente1 = row['Nombres del cliente 1']
+        nombre_cliente2 = row['Nombres del cliente 2']
+        fecha = row['Fecha de compra del producto']
+        email = row['Dirección de correo electrónico']
+        telefono = row['Número telefónico']
 
-            # Extracción de datos utilizando expresiones regulares
-            match = re.search(precio_pattern, line)
-            precio = float(match.group(1)) if match else None
-            match = re.search(nombre1_pattern, line)
-            nombre1 = match.group(1) if match else None
-            # ... (repetir para los demás patrones)
+        # Validar los datos con las expresiones regulares
+        if re.match(precio_regex, str(precio)):
+            precios.append(precio)
+        if re.match(nombre_regex, nombre_cliente1):
+            nombres_cliente1.append(nombre_cliente1)
+        if re.match(nombre_regex, nombre_cliente2):
+            nombres_cliente2.append(nombre_cliente2)
+        if re.match(fecha_regex, fecha):
+            fechas.append(fecha)
+        if re.match(email_regex, email):
+            emails.append(email)
+        if re.match(telefono_regex, telefono):
+            telefonos.append(telefono)
 
-            data.append([precio, nombre1, nombre2, fecha, email, telefono])
+    # Crear un nuevo DataFrame con los datos filtrados y ordenados
+    data = {'Precio': precios, 'Nombres del cliente 1': nombres_cliente1,
+            'Nombres del cliente 2': nombres_cliente2, 'Fecha de compra del producto': fechas,
+            'Dirección de correo electrónico': emails, 'Número telefónico': telefonos}
+    df_filtered = pd.DataFrame(data)
 
-    df = pd.DataFrame(data, columns=['Precio', 'Nombre Cliente 1', 'Nombre Cliente 2', 'Fecha', 'Email', 'Teléfono'])
-    return df
+    # Crear un archivo Excel
+    with pd.ExcelWriter('datos_ordenados.xlsx') as writer:
+        df_filtered.to_excel(writer, index=False)
 
-def main():
-    st.title('Extractor de Datos CSV')
+    return df_filtered
 
-    # Subida del archivo
-    uploaded_file = st.file_uploader("Sube tu archivo CSV", type=["csv"])
+# Interfaz de usuario de Streamlit
+st.title("Procesador de CSV con Regex")
 
-    if uploaded_file is not None:
-        df = extract_data(uploaded_file)
+uploaded_file = st.file_uploader("Sube tu archivo CSV", type=["csv"])
 
-        # Mostrar el DataFrame en Streamlit
-        st.dataframe(df)
-
-        # Descargar el DataFrame como Excel
-        @st.cache
-        def convert_df(df):
-            # IMPORTANT: Cache the conversion to prevent computation on every rerun
-            return df.to_excel(index=False)
-
-        xlsx = convert_df(df)
-        st.download_button(
-            label="Descargar como Excel",
-            data=xlsx,
-            file_name='datos.xlsx',
-            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        )
-
-if __name__ == '__main__':
-    main()
+if uploaded_file is not None:
+    df = process_csv(uploaded_file)
+    st.success("Archivo procesado exitosamente!")
+    st.dataframe(df)
+    st.download_button("Descargar archivo Excel", df.to_excel, "datos_ordenados.xlsx", mime='application/vnd.ms-excel')
