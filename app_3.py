@@ -12,6 +12,17 @@ import pandas as pd
 import re
 import io
 
+# Título de la app
+st.title('Organizador de bases de datos')
+
+# Autor de la app
+st.write('Esta app fue elaborada por Juan Camilo Torres Arboleda.')
+
+# Descripción de la app
+st.write('''
+            Carga los datos en el siguiente apartado para organizarlos
+        ''')
+
 def extract_data(text):
     """
     Extract structured data from unorganized text using regex patterns
@@ -26,18 +37,16 @@ def extract_data(text):
     # Extract data
     prices = re.findall(price_pattern, text)
     customer_names1 = re.findall(customer_name_pattern, text)
-    customer_names2 = re.findall(customer_name_pattern, text[text.index(customer_names1[0])+len(customer_names1[0]):])
     dates = re.findall(date_pattern, text)
     emails = re.findall(email_pattern, text)
     phones = re.findall(phone_pattern, text)
 
     return {
-        'Price': prices[0] if prices else None,
-        'Customer Name 1': customer_names1[0] if customer_names1 else None,
-        'Customer Name 2': customer_names2[0] if len(customer_names2) > 0 else None,
-        'Purchase Date': dates[0] if dates else None,
+        'Precio': prices[0] if prices else None,
+        'Nombre cliente': customer_names1[0] if customer_names1 else None,
+        'Fecha compra': dates[0] if dates else None,
         'Email': emails[0] if emails else None,
-        'Phone Number': phones[0] if phones else None
+        'Número celular': phones[0] if phones else None
     }
 
 def process_csv(uploaded_file):
