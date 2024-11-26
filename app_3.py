@@ -12,62 +12,46 @@ import pandas as pd
 import re
 import openpyxl
 
-def process_csv(uploaded_file):
-    # Leer el archivo CSV
-    df = pd.read_csv(uploaded_file, sep=',')  # Ajusta el separador si es necesario
+def clean_data(df):
+    # Expresiones regulares para limpiar los datos
+    pattern_precio = r"^\d+(\.\d+)?$"
+    pattern_nombre = r"^\w+\s\w+$"
+    pattern_fecha = r"^\d{2}/\d{2}/\d{2}$"
+    pattern_email = r"^[^@]+@[^@]+\.[^@]+$"
+    pattern_telefono = r"^\+\d{2}\s\d{9}$"
 
-    # Definir expresiones regulares para cada tipo de dato
-    precio_regex = r"^\d+(\.\d+)?$"
-    nombre_regex = r"^\w+\s\w+$"
-    fecha_regex = r"^\d{2}/\d{2}/\d{2}$"
-    email_regex = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
-    telefono_regex = r"^\+\d{2}\s\d{9}$"
+    # Limpiar y ordenar los datos
+    df['Precio'] = df['Precio'].apply(lambda x: float(x) if re.match(pattern_precio, str(x)) else None)
+    df['Nombres cliente 1'] = df['Nombres cliente 1'].apply(lambda x: x if re.match(pattern_nombre, x) else None)
+    df['Nombres cliente 2'] = df['Nombres cliente 2'].apply(lambda x: x if re.match(pattern_nombre, x) else None)
+    df['Fecha de compra'] = pd.to_datetime(df['Fecha de compra'], format='%d/%m/%y', errors='coerce')
+    df['Dirección de correo electrónico'] = df['Dirección de correo electrónico'].apply(lambda x: x if re.match(pattern_email, x) else None)
+    df['Número telefónico'] = df['Número telefónico'].apply(lambda x: x if re.match(pattern_telefono, x) else None)
+    df.sort_values(by=['Fecha de compra'], inplace=True)
 
-    # Crear listas para almacenar los datos filtrados y ordenados
-    precios, nombres_cliente1, nombres_cliente2, fechas, emails, telefonos = [], [], [], [], [], []
+    return df
 
-    # Iterar sobre cada fila del DataFrame
-    for index, row in df.iterrows():
-        precio = row['Precio']
-        nombre_cliente1 = row['Nombres del cliente 1']
-        nombre_cliente2 = row['Nombres del cliente 2']
-        fecha = row['Fecha de compra del producto']
-        email = row['Dirección de correo electrónico']
-        telefono = row['Número telefónico']
+def main():
+    st.title("Organizador de Datos CSV")
 
-        # Validar los datos con las expresiones regulares
-        if re.match(precio_regex, str(precio)):
-            precios.append(precio)
-        if re.match(nombre_regex, nombre_cliente1):
-            nombres_cliente1.append(nombre_cliente1)
-        if re.match(nombre_regex, nombre_cliente2):
-            nombres_cliente2.append(nombre_cliente2)
-        if re.match(fecha_regex, fecha):
-            fechas.append(fecha)
-        if re.match(email_regex, email):
-            emails.append(email)
-        if re.match(telefono_regex, telefono):
-            telefonos.append(telefono)
+    # Subida del archivo
+    uploaded_file = st.file_uploader("Sube tu archivo CSV", type="csv")
 
-    # Crear un nuevo DataFrame con los datos filtrados y ordenados
-    data = {'Precio': precios, 'Nombres del cliente 1': nombres_cliente1,
-            'Nombres del cliente 2': nombres_cliente2, 'Fecha de compra del producto': fechas,
-            'Dirección de correo electrónico': emails, 'Número telefónico': telefonos}
-    df_filtered = pd.DataFrame(data)
+    if uploaded_file is not None:
+        # Leer el archivo CSV
+        df = pd.read_csv(uploaded_file)
 
-    # Crear un archivo Excel
-    with pd.ExcelWriter('datos_ordenados.xlsx') as writer:
-        df_filtered.to_excel(writer, index=False)
+        # Limpiar y ordenar los datos
+        df_clean = clean_data(df)
 
-    return df_filtered
+        # Mostrar los datos limpios
+        st.dataframe(df_clean)
 
-# Interfaz de usuario de Streamlit
-st.title("Procesador de CSV con Regex")
+        # Generar el archivo Excel
+        with pd.ExcelWriter('datos_ordenados.xlsx') as writer:
+            df_clean.to_excel(writer, index=False)
 
-uploaded_file = st.file_uploader("Sube tu archivo CSV", type=["csv"])
+        st.success("¡Archivo Excel generado exitosamente!")
 
-if uploaded_file is not None:
-    df = process_csv(uploaded_file)
-    st.success("Archivo procesado exitosamente!")
-    st.dataframe(df)
-    st.download_button("Descargar archivo Excel", df.to_excel, "datos_ordenados.xlsx", mime='application/vnd.ms-excel')
+if __name__ == "__main__":
+    main()
