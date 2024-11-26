@@ -10,48 +10,58 @@ Original file is located at
 import streamlit as st
 import pandas as pd
 import re
-import openpyxl
 
-def clean_data(df):
-    # Expresiones regulares para limpiar los datos
-    pattern_precio = r"^\d+(\.\d+)?$"
-    pattern_nombre = r"^\w+\s\w+$"
-    pattern_fecha = r"^\d{2}/\d{2}/\d{2}$"
-    pattern_email = r"^[^@]+@[^@]+\.[^@]+$"
-    pattern_telefono = r"^\+\d{2}\s\d{9}$"
+def procesar_csv(archivo):
+    """
+    Lee el archivo CSV, extrae los datos con regex y devuelve un DataFrame de pandas.
 
-    # Limpiar y ordenar los datos
-    df['Precio'] = df['Precio'].apply(lambda x: float(x) if re.match(pattern_precio, str(x)) else None)
-    df['Nombres cliente 1'] = df['Nombres cliente 1'].apply(lambda x: x if re.match(pattern_nombre, x) else None)
-    df['Nombres cliente 2'] = df['Nombres cliente 2'].apply(lambda x: x if re.match(pattern_nombre, x) else None)
-    df['Fecha de compra'] = pd.to_datetime(df['Fecha de compra'], format='%d/%m/%y', errors='coerce')
-    df['Dirección de correo electrónico'] = df['Dirección de correo electrónico'].apply(lambda x: x if re.match(pattern_email, x) else None)
-    df['Número telefónico'] = df['Número telefónico'].apply(lambda x: x if re.match(pattern_telefono, x) else None)
-    df.sort_values(by=['Fecha de compra'], inplace=True)
+    Args:
+        archivo: Ruta al archivo CSV.
 
+    Returns:
+        pandas.DataFrame: DataFrame con los datos procesados.
+    """
+
+    datos = []
+    with open(archivo, 'r') as f:
+        for linea in f:
+            # Definimos patrones para cada columna
+            patron_precio = r"(\d+\.\d+|\d+)"
+            patron_nombres = r"(\w+\s\w+)"
+            patron_fecha = r"(\d{2}/\d{2}/\d{2})"
+            patron_email = r"(\S+@\S+)"
+            patron_telefono = r"\+(\d{2})\s(\d{9})"
+
+            # Extraemos los datos de cada línea usando findall
+            resultados = re.findall(f"{patron_precio},{patron_nombres},{patron_nombres},{patron_fecha},{patron_email},{patron_telefono}", linea)
+
+            if resultados:
+                datos.append(resultados[0])
+
+    # Creamos un DataFrame de pandas
+    df = pd.DataFrame(datos, columns=["Precio", "Nombre_Cliente1", "Nombre_Cliente2", "Fecha", "Email", "Telefono"])
     return df
 
 def main():
-    st.title("Organizador de Datos CSV")
+    st.title("Procesador de CSV con Regex y Streamlit")
 
-    # Subida del archivo
-    uploaded_file = st.file_uploader("Sube tu archivo CSV", type="csv")
+    # Subida de archivo
+    uploaded_file = st.file_uploader("Selecciona un archivo CSV", type="csv")
 
     if uploaded_file is not None:
-        # Leer el archivo CSV
-        df = pd.read_csv(uploaded_file)
+        # Procesa el archivo
+        df = procesar_csv(uploaded_file)
 
-        # Limpiar y ordenar los datos
-        df_clean = clean_data(df)
+        # Ordenar por columnas (ajusta las columnas según tus necesidades)
+        df_ordenado = df.sort_values(by=["Fecha", "Precio"])
 
-        # Mostrar los datos limpios
-        st.dataframe(df_clean)
-
-        # Generar el archivo Excel
-        with pd.ExcelWriter('datos_ordenados.xlsx') as writer:
-            df_clean.to_excel(writer, index=False)
-
-        st.success("¡Archivo Excel generado exitosamente!")
+        # Descargar el archivo Excel
+        st.download_button(
+            label="Descargar archivo Excel",
+            data=df_ordenado.to_excel(index=False, engine='openpyxl'),
+            file_name='datos_procesados.xlsx',
+            mime='application/vnd.openpyxl-templates.xlsx'
+        )
 
 if __name__ == "__main__":
     main()
